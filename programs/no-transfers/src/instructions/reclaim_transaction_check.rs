@@ -12,6 +12,11 @@ pub fn reclaim_transaction_check(ctx: Context<ReclaimTransactionCheck>) -> Resul
     Ok(())
 }
 
+/**
+ * Instruction to reclaim TransactionsChecked lamports.
+ *
+ * May only be called on behalf of the original payer.
+ */
 #[derive(Accounts)]
 pub struct ReclaimTransactionCheck<'info> {
     #[account(mut, close = payer)]

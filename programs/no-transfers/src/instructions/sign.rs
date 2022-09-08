@@ -8,6 +8,56 @@ use spl_governance::{
 
 use crate::{error::TransactionCheckerError, state::TransactionsChecked};
 
+/**
+ * Instruction to sign off on a proposal.
+ *
+ * This instruction can only be called once every transaction on the proposal has been
+ * checked.
+ */
+#[derive(Accounts)]
+pub struct Sign<'info> {
+    /// CHECK: Realms program
+    #[account(executable)]
+    realms_program: UncheckedAccount<'info>,
+
+    /// CHECK: Realm account
+    #[account(mut)]
+    realm: UncheckedAccount<'info>,
+
+    /// CHECK: Governance account
+    #[account(mut)]
+    governance: UncheckedAccount<'info>,
+
+    /// CHECK: Proposal account
+    #[account(mut)]
+    proposal: UncheckedAccount<'info>,
+
+    /// CHECK: Signing account
+    /**
+     * Account corresponding to the requested proposal signer.
+     *
+     * This is the address which will sign the proposal.
+     */
+    #[account(
+        seeds = [ b"signatory".as_ref() ],
+        bump,
+    )]
+    signatory: AccountInfo<'info>,
+
+    /// CHECK: Signatory record account
+    #[account(mut)]
+    signatory_record: AccountInfo<'info>,
+
+    #[account(
+        seeds = [
+            b"transactions-checked".as_ref(),
+            proposal.key().as_ref(),
+        ],
+        bump,
+    )]
+    transactions_checked: Account<'info, TransactionsChecked>,
+}
+
 pub fn sign(ctx: Context<Sign>) -> Result<()> {
     get_governance_data_for_realm(
         ctx.accounts.realms_program.key,
@@ -55,43 +105,4 @@ pub fn sign(ctx: Context<Sign>) -> Result<()> {
 
 pub fn signing_authority_address() -> Pubkey {
     Pubkey::find_program_address(&[b"signatory".as_ref()], &crate::id()).0
-}
-
-#[derive(Accounts)]
-pub struct Sign<'info> {
-    /// CHECK: Realms program
-    #[account(executable)]
-    realms_program: UncheckedAccount<'info>,
-
-    /// CHECK: Realm account
-    #[account(mut)]
-    realm: UncheckedAccount<'info>,
-
-    /// CHECK: Governance account
-    #[account(mut)]
-    governance: UncheckedAccount<'info>,
-
-    /// CHECK: Proposal account
-    #[account(mut)]
-    proposal: UncheckedAccount<'info>,
-
-    /// CHECK: Signing account
-    #[account(
-        seeds = [ b"signatory".as_ref() ],
-        bump,
-    )]
-    signatory: AccountInfo<'info>,
-
-    /// CHECK: Signatory record account
-    #[account(mut)]
-    signatory_record: AccountInfo<'info>,
-
-    #[account(
-        seeds = [
-            b"transactions-checked".as_ref(),
-            proposal.key().as_ref(),
-        ],
-        bump,
-    )]
-    transactions_checked: Account<'info, TransactionsChecked>,
 }
